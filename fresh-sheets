@@ -2,13 +2,11 @@
 
 import argparse
 import os
-import string
 import sys
 
 from pprint import pprint
 from googleapiclient import discovery
-from google.oauth2 import service_account
-
+from google.oauth2.service_account import Credentials
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
@@ -20,7 +18,7 @@ class EnvDefault(argparse.Action):
                 default = os.environ[envvar]
         if required and default:
             required = False
-        super(EnvDefault, self).__init__(default=default, required=required, 
+        super(EnvDefault, self).__init__(default=default, required=required,
                                          **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
@@ -28,7 +26,9 @@ class EnvDefault(argparse.Action):
 
 
 def connect_to_api(key_file):
-    credentials = service_account.Credentials.from_service_account_file(key_file, scopes=SCOPES)
+    credentials = Credentials.from_service_account_file(
+        key_file,
+        scopes=SCOPES)
     return discovery.build('sheets', 'v4', credentials=credentials)
 
 
@@ -54,8 +54,8 @@ def freshen_sheet(service, document_id, sheet_id, row, column, delimiter):
             "data": sys.stdin.read(),
             "delimiter": delimiter
           }
-        },    
-      ] 
+        },
+      ]
     }
 
     request = service.spreadsheets().batchUpdate(spreadsheetId=document_id,
@@ -65,26 +65,37 @@ def freshen_sheet(service, document_id, sheet_id, row, column, delimiter):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='fresh-sheets command line arguments')
-    parser.add_argument('-c', '--config', type=str, action=EnvDefault, envvar='CONFIG', required=False,
-                        help='Use options from the specified file')
-    parser.add_argument('-k', '--key', type=str, action=EnvDefault, envvar='KEY',
+    parser = argparse.ArgumentParser(
+        description='fresh-sheets command line arguments'
+    )
+    parser.add_argument('-k', '--key', type=str, action=EnvDefault,
+                        envvar='KEY',
                         help='The location of the Google service account key')
-    parser.add_argument('-d', '--document-id', type=str, action=EnvDefault, envvar='DOCUMENT_ID',
+    parser.add_argument('-d', '--document-id', type=str,
+                        action=EnvDefault, envvar='DOCUMENT_ID',
                         help='The UUID of the Google Sheet to freshen')
-    parser.add_argument('-s', '--sheet-id', type=str, action=EnvDefault, envvar='SHEET_ID',
-                        help='The ID of the sheet within the document to freshen')
-    parser.add_argument('--row', type=int, default=0, required=False, action=EnvDefault, envvar='ROW',
+    parser.add_argument('-s', '--sheet-id', type=str,
+                        action=EnvDefault, envvar='SHEET_ID',
+                        help='ID of the sheet within the document to freshen')
+    parser.add_argument('--row', type=int, default=0, required=False,
+                        action=EnvDefault, envvar='ROW',
                         help="Row number (0-N) to paste data")
-    parser.add_argument('--column', type=int, default=0, required=False, action=EnvDefault, envvar='COLUMN',
+    parser.add_argument('--column', type=int, default=0, required=False,
+                        action=EnvDefault, envvar='COLUMN',
                         help="Column number (0-N) to paste data")
-    parser.add_argument('--delimiter', type=str, default='\t', action=EnvDefault, envvar='DELIMITER',
-                        help='The delimiter used to separate column values')                        
+    parser.add_argument('--delimiter', type=str, default=',',
+                        action=EnvDefault, envvar='DELIMITER',
+                        help='The delimiter used to separate column values')
     args = parser.parse_args()
 
     service = connect_to_api(args.key)
-    freshen_sheet(service, args.document_id, args.sheet_id, args.row, args.column, args.delimiter)
+    freshen_sheet(
+        service,
+        args.document_id,
+        args.sheet_id, args.row, args.column,
+        args.delimiter
+    )
 
 
 if __name__ == '__main__':
-  main()
+    main()
