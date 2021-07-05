@@ -112,7 +112,7 @@ def update_sheets(service, doc_id, accounts, raw_data):
     logging.info("Updating cost center sheets")
     first_col = 2  # FIXME: hardcoded
     first_row = 3  # FIXME: hardcoded
-    max_cols = 10  # FIXME: hardcoded
+    max_cols = 20  # FIXME: hardcoded
     data = []
     for cc in accounts:
         cols = (c for c in string.ascii_uppercase[first_col:max_cols])
